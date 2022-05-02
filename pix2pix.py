@@ -43,10 +43,9 @@ parser.add_argument(
 )
 parser.add_argument("--checkpoint_interval", type=int, default=20, help="interval between model checkpoints")
 opt = parser.parse_args()
-opt.__dict__["output_path"] = opt.__dict__["output_path"] + f"{opt.task_name}/"
+opt.__dict__["output_path"] = opt.__dict__["output_path"] + f"/{opt.task_name}/"
 print(opt)
 
-time.sleep(3)
 
 def save_image(img, path, nrow=10):
     N,C,W,H = img.shape
@@ -109,7 +108,7 @@ dataloader = ImageDataset(opt.data_path, mode="train", transforms=transforms).se
     num_workers=opt.n_cpu,
 )
 
-val_dataloader = ImageDataset(opt.data_path, mode="val", transforms=transforms).set_attrs(
+val_dataloader = ImageDataset(opt.data_path, mode="test", transforms=transforms).set_attrs(
     batch_size=10,
     shuffle=False,
     num_workers=1,
@@ -121,7 +120,7 @@ def eval(epoch, writer):
     os.makedirs(f"{opt.output_path}/images/test_fake_imgs/epoch_{epoch}", exist_ok=True)
     for i, (_, real_A, photo_id) in enumerate(val_dataloader):
         fake_B = generator(real_A)
-        
+
         if i == 0:
             # visual image result
             img_sample = np.concatenate([real_A.data, fake_B.data], -2)
