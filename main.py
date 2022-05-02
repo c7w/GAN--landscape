@@ -80,9 +80,9 @@ def main():
 
 
     elif args.mode == "eval":
-        # Load Generator
-        generator = UnetGenerator(3, 3, 7, 64, norm_layer=nn.BatchNorm2d, use_dropout=True)
-        generator.load(f"{args.output_path}/saved_models/{args.task_name}/generator.pkl")
+        # Load Generator and Discriminator
+        generator, discriminator = get_model(args)
+        generator.load(f"{args.output_path}/generator.pkl")
 
         predict(generator, val_dataloader, args)
 

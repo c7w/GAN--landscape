@@ -7,7 +7,7 @@ import jittor as jt
 import jittor.nn as nn
 
 
-from models import start_grad, stop_grad
+from models.utils.utils import start_grad, stop_grad, weights_init_normal
 
 
 def train(generator, discriminator, dataloader, optimizer_G, optimizer_D, args):

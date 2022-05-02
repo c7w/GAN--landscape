@@ -6,7 +6,7 @@ import zipfile
 
 import cv2
 
-from models import stop_grad
+from models.utils.utils import start_grad, stop_grad, weights_init_normal
 
 
 @jt.single_process_scope()
