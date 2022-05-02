@@ -6,8 +6,10 @@ import jittor as jt
 import jittor.transform as transform
 from PIL import Image
 from datasets import ImageDataset
-from models import UnetGenerator, Discriminator
+from models import get_model
 from jittor import nn
+
+from models.generator.UNet import UnetGenerator
 from tools.predict_tools import predict
 from tools.training_tools import train
 
@@ -25,7 +27,7 @@ def main():
     # Training Arguments
     parser.add_argument('--epoch', type=int, default=0, help='Current epoch ID')
     parser.add_argument('--n_epochs', type=int, default=100, help='Number of epochs to train for')
-    parser.add_argument('--batch_size', type=int, default=32, help='Batch size')
+    parser.add_argument('--batch_size', type=int, default=64, help='Batch size')
     parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
     parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
     parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
@@ -63,8 +65,7 @@ def main():
 
     if args.mode == "train":
         # Load Generator and Discriminator
-        generator = UnetGenerator(3, 3, 7, 64, norm_layer=nn.BatchNorm2d, use_dropout=True)
-        discriminator = Discriminator()
+        generator, discriminator = get_model(args)
 
         if args.epoch != 0:
             generator.load(f"{args.output_path}/generator.pkl")
