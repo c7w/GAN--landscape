@@ -1,6 +1,8 @@
 import glob
 import random
 import os
+
+import IPython
 import numpy as np
 
 from jittor.dataset.dataset import Dataset
@@ -29,9 +31,10 @@ class ImageDataset(Dataset):
 
         if self.mode == "train":
             img_A = Image.open(self.files[index % len(self.files)])
-            if np.random.random() < 0.5: # random flip
-                img_A = Image.fromarray(np.array(img_A)[:, ::-1, :], "RGB")
-                img_B = Image.fromarray(np.array(img_B)[:, ::-1, :], "RGB")
+            # Commented out by c7w: what if we do not take data augmentation into account?
+            # if np.random.random() < 0.5: # random flip
+            #     img_A = Image.fromarray(np.array(img_A)[:, ::-1, :], "RGB")
+            #     img_B = Image.fromarray(np.array(img_B)[:, ::-1, :], "RGB")
             img_A = self.transforms(img_A)
         else:
             img_A = np.empty([1])

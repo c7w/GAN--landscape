@@ -9,6 +9,8 @@ from datasets import ImageDataset
 from models import UnetGenerator, Discriminator
 from jittor import nn
 from tools.predict_tools import predict
+from tools.training_tools import train
+
 
 def main():
     # Parse Arguments
@@ -21,11 +23,14 @@ def main():
     parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
 
     # Training Arguments
-    parser.add_argument('--epochs', type=int, default=100, help='Number of epochs to train for')
+    parser.add_argument('--epoch', type=int, default=0, help='Current epoch ID')
+    parser.add_argument('--n_epochs', type=int, default=100, help='Number of epochs to train for')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size')
     parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
     parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
     parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
+    parser.add_argument("--lambda_pixel", type=float, default=10, help="loss: lambda_pixel")
+    parser.add_argument("--checkpoint_interval", type=int, default=20, help="interval between model checkpoints")
 
     # Evaluation Arguments
     parser.add_argument('--model_path', type=str, default="", help='Path to generator model')
@@ -58,15 +63,19 @@ def main():
 
     if args.mode == "train":
         # Load Generator and Discriminator
-        generator = UnetGenerator(in_channels=3, out_channels=3)
-        generator.load(f"{args.output_path}/saved_models/{args.task_name}/generator.pkl")
-
+        generator = UnetGenerator(3, 3, 7, 64, norm_layer=nn.BatchNorm2d, use_dropout=True)
         discriminator = Discriminator()
-        discriminator.load(f"{args.output_path}/saved_models/{args.task_name}/discriminator.pkl")
+
+        if args.epoch != 0:
+            generator.load(f"{args.output_path}/generator.pkl")
+            discriminator.load(f"{args.output_path}/discriminator.pkl")
 
         # Optimizers
         optimizer_G = jt.optim.Adam(generator.parameters(), lr=args.lr, betas=(args.b1, args.b2))
         optimizer_D = jt.optim.Adam(discriminator.parameters(), lr=args.lr, betas=(args.b1, args.b2))
+
+        # TODO: Call training function
+        train(generator, discriminator, dataloader, optimizer_G, optimizer_D, args)
 
 
     elif args.mode == "eval":
@@ -75,9 +84,6 @@ def main():
         generator.load(f"{args.output_path}/saved_models/{args.task_name}/generator.pkl")
 
         predict(generator, val_dataloader, args)
-
-
-
 
     else:
         raise NotImplementedError

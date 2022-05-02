@@ -6,8 +6,14 @@ import zipfile
 
 import cv2
 
+from models import stop_grad
+
+
 @jt.single_process_scope()
 def predict(generator, val_dataloader, args):
+
+    stop_grad(generator)
+
     output_dir = Path(f"{args.output_path}/{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}")
     os.makedirs(output_dir, exist_ok=True)
 
