@@ -46,7 +46,7 @@ opt = parser.parse_args()
 opt.__dict__["output_path"] = opt.__dict__["output_path"] + f"{opt.task_name}/"
 print(opt)
 
-
+time.sleep(3)
 
 def save_image(img, path, nrow=10):
     N,C,W,H = img.shape

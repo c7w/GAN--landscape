@@ -1,1 +1,1 @@
-python pix2pix.py --batch_size 32
+python pix2pix.py --batch_size 32 --data_path /root/landscape/data --output-path /root/landscape/results
