@@ -16,4 +16,6 @@ def get_model(args: Namespace):
         discriminator = CNNDiscriminator()
         return generator, discriminator
 
+    # TODO: Add more models here
+
     raise NotImplementedError(f"Unknown task name: {task_name}")

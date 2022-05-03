@@ -47,7 +47,7 @@ def train(generator, discriminator, dataloader, optimizer_G, optimizer_D, args):
             optimizer_G.step(loss_G)
 
             if i % 5 == 0:
-                loop.set_description(f'[{args.task_name}] [Epoch {epoch + 1}/{args.n_epochs}] [Batch {i}/{len(dataloader)}]')
+                loop.set_description(f'[{args.task_name}] [Epoch {epoch + 1}/{args.n_epochs}]')
                 loop.set_postfix(
                     lossD=loss_D.numpy()[0],
                     lossG=loss_G.numpy()[0],

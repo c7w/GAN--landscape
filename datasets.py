@@ -10,6 +10,7 @@ import jittor.transform as transform
 from PIL import Image
 
 class ImageDataset(Dataset):
+
     def __init__(self, root, mode="train", transforms=None):
         super().__init__()
         self.transforms = transform.Compose(transforms)
@@ -41,4 +42,4 @@ class ImageDataset(Dataset):
             img_A = np.empty([1])
         img_B = self.transforms(img_B)
 
-        return img_A, img_B, photo_id
+        return img_A, img_B, photo_id # img_A is the original image, img_B is the label

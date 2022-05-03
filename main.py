@@ -75,7 +75,6 @@ def main():
         optimizer_G = jt.optim.Adam(generator.parameters(), lr=args.lr, betas=(args.b1, args.b2))
         optimizer_D = jt.optim.Adam(discriminator.parameters(), lr=args.lr, betas=(args.b1, args.b2))
 
-        # TODO: Call training function
         train(generator, discriminator, dataloader, optimizer_G, optimizer_D, args)
 
 
