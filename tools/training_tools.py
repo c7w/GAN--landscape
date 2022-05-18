@@ -11,7 +11,7 @@ from models.utils.utils import start_grad, stop_grad, weights_init_normal
 
 
 def train(generator, discriminator, dataloader, optimizer_G, optimizer_D, args):
-    criterion_GAN = nn.BCEWithLogitsLoss()
+    criterion_GAN = nn.MSELoss()
     criterion_pixelwise = nn.L1Loss()
 
     for epoch in range(args.epoch, args.n_epochs):
@@ -22,14 +22,16 @@ def train(generator, discriminator, dataloader, optimizer_G, optimizer_D, args):
             start_grad(discriminator)
             stop_grad(generator)
 
+            # IPython.embed()
+
             fake_B = generator(real_A)
             fake_AB = jt.contrib.concat((real_A, fake_B), 1)
             pred_fake = discriminator(fake_AB.detach())
-            loss_D_fake = criterion_GAN(pred_fake, False)
+            loss_D_fake = criterion_GAN(pred_fake, 0)
 
             real_AB = jt.contrib.concat((real_A, real_B), 1)
             pred_real = discriminator(real_AB)
-            loss_D_real = criterion_GAN(pred_real, True)
+            loss_D_real = criterion_GAN(pred_real, 1)
 
             loss_D = (loss_D_fake + loss_D_real) * 0.5
             optimizer_D.step(loss_D)
@@ -41,7 +43,7 @@ def train(generator, discriminator, dataloader, optimizer_G, optimizer_D, args):
             fake_B = generator(real_A)
             fake_AB = jt.contrib.concat((real_A, fake_B), 1)
             pred_fake = discriminator(fake_AB)
-            loss_G_GAN = criterion_GAN(pred_fake, True)
+            loss_G_GAN = criterion_GAN(pred_fake, 1)
             loss_G_L1 = criterion_pixelwise(fake_B, real_B)
             loss_G = loss_G_GAN + args.lambda_pixel * loss_G_L1
             optimizer_G.step(loss_G)

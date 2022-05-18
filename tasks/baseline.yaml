@@ -1,0 +1,40 @@
+meta:
+  base: GANExperiment
+  task: baseline
+  checkpoint_path: "/home/c7w/landscape/checkpoints/" # Would save checkpoints to `<checkpoint_path>/<task>/`
+  log_path: "/home/c7w/landscape/logs/" # Would save logs to `<log_path>/<task>/`
+  load: # Checkpoint ID to be loaded, if None not load
+  seed: # Seed
+  num_loaders: 1
+  log_interval: 20
+  shuffle_train: True
+
+
+train:
+  max_epochs: 1000
+  max_iterations: 1000000
+  batch_size: 32
+  save_every_iteration: 1000
+  save_every_epoch: 10
+  test_dev_every_epoch: 10
+
+generator:
+  type: UNet
+  optimizer:
+    type: Adam
+    lr: 0.0001
+    beta1: 0.9
+    beta2: 0.999
+    clip_grad_norm: 1000.0
+    clip_weights: 10.0
+
+discriminator:
+  type: CNN
+  optimizer:
+      type: Adam
+      lr: 0.0001
+      beta1: 0.9
+      beta2: 0.99
+
+loss:
+  type: 'ls'

@@ -2,10 +2,10 @@ import jittor as jt
 import jittor.nn as nn
 from models.utils.utils import start_grad, stop_grad, weights_init_normal
 
-class SegCNN(nn.Module):
+class PseudoJudger(nn.Module):
 
     def __init__(self, in_channels=3):
-        super(SegCNN, self).__init__()
+        super(PseudoJudger, self).__init__()
 
         # TODO: implement the segmentor
         # Implement credit to: https://github.com/Jittor/segmentation-jittor
