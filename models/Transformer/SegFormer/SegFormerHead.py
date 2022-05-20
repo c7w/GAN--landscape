@@ -12,12 +12,13 @@ class SegFormerHeadMLP(nn.Module):
         return x
 
 class SegFormerHead(nn.Module):
-    def __init__(self, in_channels, embedding_dim, hidden_features, num_classes,
+    def __init__(self, in_channels, embedding_dim, hidden_dim, num_classes,
                  , feature_strides, **kwargs):
         super(SegFormerHead, self).__init__(**kwargs)
         assert len(feature_strides) == len(self.in_channels)
         assert min(feature_strides) == feature_strides[0]
 
+        self.in_channels = in_channels
         self.feature_strides = feature_strides
 
         c1_in_channels, c2_in_channels, c3_in_channels, c4_in_channels = self.in_channels
@@ -28,12 +29,12 @@ class SegFormerHead(nn.Module):
         self.linear_c4 = nn.Linear(c4_in_channels, embedding_dim)
 
         self.linear_fuse = nn.Sequential(
-            nn.Conv2d(embedding_dim * 4, embedding_dim, kernel_size=1, stride=1, padding=0, bias=True),
-            nn.BatchNorm(embedding_dim),
+            nn.Conv2d(embedding_dim * 4, hidden_dim, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm(hidden_dim),
             nn.ReLU(),
         )
 
-        self.linear_pred = nn.Conv2d(embedding_dim, self.num_classes, kernel_size=1)
+        self.linear_pred = nn.Conv2d(hidden_dim, num_classes, kernel_size=1)
 
     def execute(self, inputs):
         # x = self._transform_inputs(inputs)  # len=4, 1/4, 1/8, 1/16, 1/32
