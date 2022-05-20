@@ -35,23 +35,26 @@ class SegFormerAttention(nn.Module):
         self.apply(self.init_weights)
 
     def execute(self, x, H, W):
+
+        # TODO: Transfer these buggy codes to Jittor!!!!!!!
+
         B, N, C = x.shape
 
         # B, self.num_heads, N, self.head_dim
-        q = self.q(x).reshape(B, N, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
+        q = self.q(x).reshape(B, N, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
 
         if self.sr_ratio > 1:
-            x_ = x.permute(0, 2, 1).reshape(B, C, H, W)
-            x_ = self.sr(x_).reshape(B, C, -1).permute(0, 2, 1)  # B, N/(sr_ratio^2), C
+            x_ = x.transpose(axes=(0, 2, 1)).reshape(B, C, H, W)
+            x_ = self.sr(x_).reshape(B, C, -1).transpose(0, 2, 1)  # B, N/(sr_ratio^2), C
             x_ = self.norm(x_)
 
             # B, self.num_heads, N/(sr_ratio^2), self.head_dim
-            k = self.k(x_).reshape(B, -1, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
-            v = self.v(x_).reshape(B, -1, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
+            k = self.k(x_).reshape(B, -1, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
+            v = self.v(x_).reshape(B, -1, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
 
         else:
-            k = self.k(x).reshape(B, -1, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
-            v = self.v(x).reshape(B, -1, self.num_heads, self.head_dim).permute(0, 2, 1, 3)
+            k = self.k(x).reshape(B, -1, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
+            v = self.v(x).reshape(B, -1, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
 
         attn = (q @ k.transpose(-2, -1)) * self.qk_scale  # q * k^T, (B, self.num_heads, N, N/(sr_ratio^2))
         attn = attn.softmax(dim=-1)
