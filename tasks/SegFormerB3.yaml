@@ -1,0 +1,14 @@
+meta:
+  task: SegFormerB3
+  checkpoint_path: "/home/c7w/landscape/checkpoints/" # Would save checkpoints to `<checkpoint_path>/<task>/`
+  log_path: "/home/c7w/landscape/logs/" # Would save logs to `<log_path>/<task>/`
+  load: # Checkpoint ID to be loaded, if None not load
+  seed: 114514 # Seed
+  num_loaders: 1
+  log_interval: 20
+
+train:
+  max_epochs: 400
+  batch_size: 32
+  save_every_epoch: 10
+

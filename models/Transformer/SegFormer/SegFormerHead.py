@@ -13,7 +13,7 @@ class SegFormerHeadMLP(nn.Module):
 
 class SegFormerHead(nn.Module):
     def __init__(self, in_channels, embedding_dim, hidden_dim, num_classes,
-                 , feature_strides, **kwargs):
+                 feature_strides, **kwargs):
         super(SegFormerHead, self).__init__(**kwargs)
         assert len(feature_strides) == len(self.in_channels)
         assert min(feature_strides) == feature_strides[0]

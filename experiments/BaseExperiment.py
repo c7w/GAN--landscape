@@ -68,7 +68,7 @@ class BaseExperiment:
     def _init_network_state(self):
         raise NotImplementedError("_init_network_state() is not implemented in BaseExperiment")
 
-    def _train_network(self):
+    def _train_network(self, batch, i):
         raise NotImplementedError("_train_network() is not implemented in BaseExperiment")
 
     def _should_stop(self, epoch, iteration):
@@ -82,7 +82,7 @@ class BaseExperiment:
             should_save = f"iteration-{iteration}"
         return should_save
 
-    def _save_model(self):
+    def _save_model(self, epochs, iterations):
         raise NotImplementedError("_save_model() is not implemented in BaseExperiment")
 
     def _load_model(self):
