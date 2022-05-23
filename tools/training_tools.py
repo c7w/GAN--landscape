@@ -48,7 +48,7 @@ def train(generator, discriminator, dataloader, optimizer_G, optimizer_D, args):
             loss_G = loss_G_GAN + args.lambda_pixel * loss_G_L1
             optimizer_G.step(loss_G)
 
-            if i % 5 == 0:
+            if i % 200 == 0:
                 loop.set_description(f'[{args.task_name}] [Epoch {epoch + 1}/{args.n_epochs}]')
                 loop.set_postfix(
                     lossD=loss_D.numpy()[0],
