@@ -1,7 +1,10 @@
 import math
 
+import IPython
 import jittor as jt
 import jittor.nn as nn
+
+from models.utils.init_weights import init_weights
 
 
 class SegFormerAttention(nn.Module):
@@ -14,7 +17,7 @@ class SegFormerAttention(nn.Module):
 
         self.dim = dim
         self.num_heads = num_heads
-        self.head_dim = dim / num_heads
+        self.head_dim = dim // num_heads
         self.qk_scale = qk_scale if qk_scale is not None else math.pow(self.head_dim, -0.5)
 
         self.q = nn.Linear(dim, dim, bias=qkv_bias)
@@ -32,19 +35,18 @@ class SegFormerAttention(nn.Module):
             self.sr = nn.Conv2d(dim, dim, kernel_size=sr_ratio, stride=sr_ratio)
             self.norm = nn.LayerNorm(dim)
 
-        self.apply(self.init_weights)
+        self.apply(init_weights)
 
     def execute(self, x, H, W):
-
-        # TODO: Transfer these buggy codes to Jittor!!!!!!!
 
         B, N, C = x.shape
 
         # B, self.num_heads, N, self.head_dim
-        q = self.q(x).reshape(B, N, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
+        q = self.q(x)
+        q = q.reshape(B, N, self.num_heads, self.head_dim).transpose(0, 2, 1, 3)
 
         if self.sr_ratio > 1:
-            x_ = x.transpose(axes=(0, 2, 1)).reshape(B, C, H, W)
+            x_ = x.transpose(0, 2, 1).reshape(B, C, H, W)
             x_ = self.sr(x_).reshape(B, C, -1).transpose(0, 2, 1)  # B, N/(sr_ratio^2), C
             x_ = self.norm(x_)
 

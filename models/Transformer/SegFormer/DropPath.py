@@ -17,7 +17,7 @@ class DropPath(nn.Module):
             return x
         keep_prob = 1 - drop_prob
 
-        shape = [x.shape[0], *[1 for i in range(len(x.shape()) - 1)]]
+        shape = [x.shape[0], *[1 for i in range(len(x.shape) - 1)]]
         random_tensor = jt.rand(shape, dtype=x.dtype) + keep_prob
         np.floor(random_tensor.data, out=random_tensor.data)
 

@@ -1,5 +1,5 @@
 import jittor.nn as nn
-
+import math
 
 def init_weights(layer):
     if isinstance(layer, nn.Linear):
