@@ -10,18 +10,18 @@ import jittor.transform as transform
 from PIL import Image
 
 # Default transforms
-transform = (
+transforms = transform.Compose((
     transform.Resize(size=(384, 512), mode=Image.BICUBIC),
     transform.ToTensor(),
     transform.ImageNormalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-)
+))
 
 
 class ImageDataset(Dataset):
 
-    def __init__(self, root, mode="train", transforms=transform):
+    def __init__(self, root, mode="train"):
         super().__init__()
-        self.transforms = transform.Compose(transforms)
+        self.transforms = transforms
         self.mode = mode
         if self.mode == 'train':
             self.files = sorted(glob.glob(os.path.join(root, mode, "imgs") + "/*.*"))

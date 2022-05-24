@@ -12,7 +12,11 @@ import datetime
 from argparse import Namespace
 import numpy as np
 import yaml
-from models.utils.utils import stop_grad
+from tqdm import tqdm
+
+from datasets.datasets import ImageDataset
+from models import build_generator, build_discriminator
+from models.utils.utils import stop_grad, start_grad
 
 
 class GANExperiment:
@@ -29,23 +33,76 @@ class GANExperiment:
 
     def _init_network(self):
         # Network
-        self.generator, self.optimizer_G = build_generator(config['network']['generator'])
-        self.discriminator, self.optimizer_D = build_discriminator(config['network']['discriminator'])
+        self.generator, self.optimizer_G = build_generator(self.config['network']['generator'])
+        self.discriminator, self.optimizer_D = build_discriminator(self.config['network']['discriminator'])
+
+        self.epoch = 1
+        self.iteration = 1
 
         # Load model
         if self.load is not None:
             self._load_model()
 
     def _init_dataset_train(self):
-        pass  # TODO
+        self.dataloader = ImageDataset("/home/c7w/landscape/data/", mode="train").set_attrs(
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=12,
+        )
 
     def _init_dataset_valid(self):
-        pass  # TODO
+        self.dataloader = ImageDataset("/home/c7w/landscape/data/", mode="test").set_attrs(
+            batch_size=self.batch_size,
+            shuffle=True,
+            num_workers=12,
+        )
 
     def train(self):
-        pass  # TODO
 
-    def test(self, save_name=None, save_zip=False):
+        # TODO: Add more losses...??
+        criterion = nn.BCELoss()
+        # Originally a L1 Loss exists here...
+
+        for self.epoch in range(self.epoch, self.max_epochs):
+
+            loop = tqdm(enumerate(self.dataloader), total=len(self.dataloader))
+            for batch_idx, batch in loop:
+                img, label, photo_id = batch
+
+                if self.iteration % 2 == 0:
+                    # Train Discriminator
+                    stop_grad(self.generator)
+                    start_grad(self.discriminator)
+
+                    fake_img = self.generator(label)
+
+                    loss_fake = criterion(self.discriminator(fake_img, label), -1.0)
+                    loss_real = criterion(self.discriminator(img, label), 1.0)
+
+                    loss_D = loss_fake + loss_real
+                    self.optimizer_D.step(loss_D)
+
+                else:
+                    # Train Generator
+                    stop_grad(self.discriminator)
+                    start_grad(self.generator)
+
+                    fake_img = self.generator(label)
+                    loss = criterion(self.discriminator(fake_img, label), 1.0)
+                    self.optimizer_G.step(loss)
+
+                # Save for iteration
+                if self.iteration % self.save_every_iteration == 0:
+                    self._save_model(self.epoch, self.iteration)
+
+                self.iteration += 1
+
+            # Save for epoch
+            if self.epoch % self.save_every_epoch == 0:
+                self._save_model(self.epoch, self.iteration)
+
+
+    def test(self, save_name=None):
         stop_grad(self.generator)
 
         save_name = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + "" if save_name is None else ("-" + save_name)
@@ -78,6 +135,10 @@ class GANExperiment:
         self.discriminator.load_state_dict(to_load['discriminator'])
         self.optimizer_G.load_state_dict(to_load['optimizer_G'])
         self.optimizer_D.load_state_dict(to_load['optimizer_D'])
+        self.epoch = to_load['epoch'] + 1
+        self.iteration = to_load['iteration'] + 1
+
+
 
     def _save_model(self, epochs, iterations):
         # Check if self.checkpoint_path exists
@@ -90,6 +151,8 @@ class GANExperiment:
             "discriminator": self.discriminator.state_dict(),
             "optimizer_G": self.optimizer_G.state_dict(),
             "optimizer_D": self.optimizer_D.state_dict(),
+            "epoch": self.epoch,
+            "iteration": self.iteration
         }
         jt.save(to_save, save_path)
 
@@ -119,6 +182,7 @@ class GANExperiment:
         self.max_iterations = config['training']['max_iterations']
         self.batch_size = config['training']['batch_size']
         self.save_every_iteration = config['training']['save_every_iteration']
+        self.save_every_epoch = config['training']['save_every_epoch']
 
 
 if __name__ == "__main__":

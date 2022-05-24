@@ -4,28 +4,31 @@ meta:
   test_save_path: "/home/c7w/landscape/test_save/" # Would save test images to `<test_save_path>/<task>/`
   log_path: "/home/c7w/landscape/logs/" # Would save logs to `<log_path>/<task>/`
   load: # Checkpoint ID to be loaded, if None not load
-  seed: # Seed
+  seed: 123123 # Seed
 
 train:
   max_epochs: 1000
   max_iterations: 1000000
   batch_size: 16
   save_every_iteration: 1000
+  save_every_epoch: 10
 
 generator:
   type: UNet
   optimizer:
     type: Adam
-    lr: 0.0001
+    lr: 0.0005
     beta1: 0.9
     beta2: 0.999
-    clip_grad_norm: 1000.0
-    clip_weights: 10.0
+    weight_decay: 0.01
+#    clip_grad_norm: 1000.0 # Unused
+#    clip_weights: 10.0
 
 discriminator:
   type: CNN
   optimizer:
       type: Adam
-      lr: 0.0001
+      lr: 0.0005
       beta1: 0.9
       beta2: 0.99
+      weight_decay: 0.05
