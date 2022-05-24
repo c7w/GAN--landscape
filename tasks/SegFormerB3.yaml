@@ -3,7 +3,7 @@ meta:
   checkpoint_path: "/home/c7w/landscape/checkpoints/" # Would save checkpoints to `<checkpoint_path>/<task>/`
   log_path: "/home/c7w/landscape/logs/" # Would save logs to `<log_path>/<task>/`
 #  load: "SegFormerB3-e0-i0.pkl"  # Checkpoint ID to be loaded, if None not load
-  load:
+  load: "SegFormerB3-last.pkl"
   seed: 114514 # Seed
   num_loaders: 1
   log_interval: 20
@@ -12,4 +12,4 @@ train:
   max_epochs: 400
   batch_size: 1
   save_every_epoch: 10
-  lr: 0.001
+  lr: 0.0002

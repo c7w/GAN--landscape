@@ -67,7 +67,7 @@ class SegExperiment:
                 print(epoch, idx, loss.item())
                 self.optimizer.step(loss)
 
-                if idx % 5 == 0:
+                if idx % 500 == 0:
                     self._save_model(epoch, idx)
 
     def test(self):

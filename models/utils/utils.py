@@ -1,12 +1,15 @@
 import jittor as jt
 
+
 def start_grad(model):
     for param in model.parameters():
         param.start_grad()
 
+
 def stop_grad(model):
     for param in model.parameters():
         param.stop_grad()
+
 
 def weights_init_normal(m):
     classname = m.__class__.__name__
