@@ -173,7 +173,7 @@ class GANExperiment:
         # Reset random number generator
         seed = config['meta']['seed']
         if seed is not None:
-            jt.seed(seed)
+            jt.misc.set_global_seed(self.seed, different_seed_for_mpi=True)  # Set seed
             np.random.seed(seed)
             random.seed(seed)
 
