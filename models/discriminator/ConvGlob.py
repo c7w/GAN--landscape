@@ -12,6 +12,7 @@ class ConvGlobDiscriminator(nn.Module):
     TODO: 'Memorize' strategies is strongly needed, maybe add the L1 Loss back...
     TODO: RGB Image channels and Semantic Label channels should not be viewed as duals, but now they are just\
      concatenated together.
+    TODO: Maybe change discriminator to Attention Network to penalize repeating?
     """
 
     def __init__(self, in_channels=3):
