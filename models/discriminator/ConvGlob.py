@@ -8,6 +8,11 @@ from models.utils.utils import start_grad, stop_grad, weights_init_normal
 
 
 class ConvGlobDiscriminator(nn.Module):
+    """
+    TODO: 'Memorize' strategies is strongly needed, maybe add the L1 Loss back...
+    TODO: RGB Image channels and Semantic Label channels should not be viewed as duals, but now they are just\
+     concatenated together.
+    """
 
     def __init__(self, in_channels=3):
         super(ConvGlobDiscriminator, self).__init__()
