@@ -1,18 +1,22 @@
-# Jittor 第二届草图生成风景比赛 baseline
+# GAN!
 
+Anonymous Author(s)
 
 ## Requirements
 
-
+TODO
 
 ## Train
 
-```
-python3 main.py --mode train --task_name <task_name>
-```
+TODO
 
-## Eval
+## 创新点
++ Try generator more if it is weak
++ Global features
++ Use Transformer
 
-```
-python3 main.py --mode eval --task_name <task_name>
-```
+## Reference
+
++ StyleGAN
++ epe
++ SegFormer

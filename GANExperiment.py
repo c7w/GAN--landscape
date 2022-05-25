@@ -83,7 +83,7 @@ class GANExperiment:
                     loss_fake = criterion(self.discriminator(fake_img, label), -1.0)
                     loss_real = criterion(self.discriminator(img, label), 1.0)
 
-                    loss_D = loss_fake + loss_real
+                    loss_D = (loss_fake + loss_real) / 2
                     self.optimizer_D.step(loss_D)
 
                 else:
@@ -92,11 +92,12 @@ class GANExperiment:
                     start_grad(self.generator)
 
                     fake_img = self.generator(label)
+
                     loss_G = criterion(self.discriminator(fake_img, label), 1.0)
                     self.optimizer_G.step(loss_G)
 
                 # Logging
-                if self.log_interval > 0 and  self.iteration % self.log_interval == 1:
+                if self.log_interval > 0 and self.iteration % self.log_interval == 1:
                     loop.set_description(f'[{self.task}] [{self.epoch} / {self.iteration}]')
                     loop.set_postfix(
                         lossD=loss_D.item(),
@@ -104,17 +105,18 @@ class GANExperiment:
                     )
 
                 # Save for iteration
-                if self.save_every_iteration > 0 and self.iteration % self.save_every_iteration == 0:
+                if self.save_every_iteration > 0 and self.iteration % self.save_every_iteration == 1:
                     self._save_model(self.epoch, self.iteration)
+                    self.test(save_name=f"test-{self.epoch}-{self.iteration}", sample=True)
 
                 self.iteration += 1
 
             # Save for epoch
-            if self.save_every_epoch > 0 and self.epoch % self.save_every_epoch == 0:
+            if self.save_every_epoch > 0 and self.epoch % self.save_every_epoch == 1:
                 self._save_model(self.epoch, self.iteration)
-                self.test(save_name=f"test-{self.epoch}")
+                self.test(save_name=f"test-{self.epoch}-{self.iteration}", sample=True)
 
-    def test(self, save_name=None):
+    def test(self, save_name=None, sample=False):
         stop_grad(self.generator)
 
         save_name = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ("" if save_name is None else ("-" + save_name))
@@ -123,20 +125,35 @@ class GANExperiment:
 
         os.makedirs(output_dir, exist_ok=True)
 
-        f = zipfile.ZipFile(str(self.test_save_path / self.task / (save_name + ".zip")), 'w',
-                            zipfile.ZIP_DEFLATED)
+        if sample:
+            for i, (_, real_A, photo_id) in enumerate(self.dataloader):
+                fake_B = self.generator(real_A)
+                fake_B = ((fake_B + 1) / 2 * 255).numpy().astype('uint8')
 
-        # Iterate through val_dataloader
-        for i, (_, real_A, photo_id) in enumerate(self.dataloader):
-            fake_B = self.generator(real_A)
-            fake_B = ((fake_B + 1) / 2 * 255).numpy().astype('uint8')
+                for idx in range(fake_B.shape[0]):
+                    filename = str(output_dir / f"{photo_id[idx]}.jpg")
+                    cv2.imwrite(filename,
+                                fake_B[idx].transpose(1, 2, 0)[:, :, ::-1])  # BGR to RGB
 
-            for idx in range(fake_B.shape[0]):
-                filename = str(output_dir / f"{photo_id[idx]}.jpg")
-                cv2.imwrite(filename,
-                            fake_B[idx].transpose(1, 2, 0)[:, :, ::-1])  # BGR to RGB
-                f.write(filename, arcname=f"{photo_id[idx]}.jpg")
-        f.close()
+                if i == 10:
+                    break
+
+        else:
+
+            f = zipfile.ZipFile(str(self.test_save_path / self.task / (save_name + ".zip")), 'w',
+                                zipfile.ZIP_DEFLATED)
+
+            # Iterate through val_dataloader
+            for i, (_, real_A, photo_id) in enumerate(self.dataloader):
+                fake_B = self.generator(real_A)
+                fake_B = ((fake_B + 1) / 2 * 255).numpy().astype('uint8')
+
+                for idx in range(fake_B.shape[0]):
+                    filename = str(output_dir / f"{photo_id[idx]}.jpg")
+                    cv2.imwrite(filename,
+                                fake_B[idx].transpose(1, 2, 0)[:, :, ::-1])  # BGR to RGB
+                    f.write(filename, arcname=f"{photo_id[idx]}.jpg")
+            f.close()
 
     def _load_model(self):
         load_path = (self.checkpoint_path / self.task / f"{self.load}").resolve().absolute().__str__()

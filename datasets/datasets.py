@@ -13,6 +13,7 @@ from PIL import Image
 transforms = transform.Compose((
     transform.Resize(size=(384, 512), mode=Image.BICUBIC),
     transform.ToTensor(),
+    # TODO: Is this correct? Image should map (0, 255) to (0, 1), not center to 0.5 per image????
     transform.ImageNormalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
 ))
 
@@ -44,7 +45,7 @@ class ImageDataset(Dataset):
 
         img_B = Image.open(label_path)
         img_B = self.transforms_label(img_B)
-        img_B = np.array(img_B)[np.newaxis, :, :]
+        img_B = np.array(img_B)[np.newaxis, :, :].astype(np.float32)
 
         if self.mode == "train":
             img_A = Image.open(self.files[index % len(self.files)])

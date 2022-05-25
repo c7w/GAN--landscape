@@ -1,5 +1,5 @@
 meta:
-  task: AttnGAN-2
+  task: AttnGAN-3
   checkpoint_path: "/home/c7w/landscape/checkpoints/" # Would save checkpoints to `<checkpoint_path>/<task>/`
   test_save_path: "/home/c7w/landscape/test_save/" # Would save test images to `<test_save_path>/<task>/`
   log_path: "/home/c7w/landscape/logs/" # Would save logs to `<log_path>/<task>/`
@@ -10,9 +10,9 @@ meta:
 training:
   max_epochs: 1000
   max_iterations: 1000000
-  batch_size: 16
-  save_every_iteration: -1 # Save every n iterations, -1 for disabled
-  save_every_epoch: 25 # Save every n epochs, -1 for disabled
+  batch_size: 1
+  save_every_iteration: 1000 # Save every n iterations, -1 for disabled
+  save_every_epoch: -1 # Save every n epochs, -1 for disabled
 
 network:
   generator:
@@ -27,7 +27,7 @@ network:
   #    clip_weights: 10.0
 
   discriminator:
-    type: CNN
+    type: ConvGlob
     optimizer:
         type: Adam
         lr: 0.0005
