@@ -47,7 +47,7 @@ class GANExperiment:
         self.dataloader = ImageDataset("/home/c7w/landscape/data/", mode="train").set_attrs(
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=12,
+            # num_workers=1,
         )
 
     def _init_dataset_valid(self):
@@ -60,8 +60,11 @@ class GANExperiment:
     def train(self):
 
         # TODO: Add more losses...??
-        criterion = nn.BCELoss()
+        criterion = nn.MSELoss()
         # Originally a L1 Loss exists here...
+
+        loss_D = jt.array(99)
+        loss_G = jt.array(99)
 
         for self.epoch in range(self.epoch, self.max_epochs):
 
@@ -69,7 +72,8 @@ class GANExperiment:
             for batch_idx, batch in loop:
                 img, label, photo_id = batch
 
-                if self.iteration % 2 == 0:
+                # If loss_G is way too high, we should train generator more
+                if self.iteration % 2 == 0 and loss_G / loss_D <= 2.0:
                     # Train Discriminator
                     stop_grad(self.generator)
                     start_grad(self.discriminator)
@@ -88,24 +92,32 @@ class GANExperiment:
                     start_grad(self.generator)
 
                     fake_img = self.generator(label)
-                    loss = criterion(self.discriminator(fake_img, label), 1.0)
-                    self.optimizer_G.step(loss)
+                    loss_G = criterion(self.discriminator(fake_img, label), 1.0)
+                    self.optimizer_G.step(loss_G)
+
+                # Logging
+                if self.log_interval > 0 and  self.iteration % self.log_interval == 1:
+                    loop.set_description(f'[{self.task}] [{self.epoch} / {self.iteration}]')
+                    loop.set_postfix(
+                        lossD=loss_D.item(),
+                        lossG=loss_G.item(),
+                    )
 
                 # Save for iteration
-                if self.iteration % self.save_every_iteration == 0:
+                if self.save_every_iteration > 0 and self.iteration % self.save_every_iteration == 0:
                     self._save_model(self.epoch, self.iteration)
 
                 self.iteration += 1
 
             # Save for epoch
-            if self.epoch % self.save_every_epoch == 0:
+            if self.save_every_epoch > 0 and self.epoch % self.save_every_epoch == 0:
                 self._save_model(self.epoch, self.iteration)
-
+                self.test(save_name=f"test-{self.epoch}")
 
     def test(self, save_name=None):
         stop_grad(self.generator)
 
-        save_name = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + "" if save_name is None else ("-" + save_name)
+        save_name = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ("" if save_name is None else ("-" + save_name))
 
         output_dir = self.test_save_path / self.task / save_name
 
@@ -117,7 +129,6 @@ class GANExperiment:
         # Iterate through val_dataloader
         for i, (_, real_A, photo_id) in enumerate(self.dataloader):
             fake_B = self.generator(real_A)
-
             fake_B = ((fake_B + 1) / 2 * 255).numpy().astype('uint8')
 
             for idx in range(fake_B.shape[0]):
@@ -128,7 +139,7 @@ class GANExperiment:
         f.close()
 
     def _load_model(self):
-        load_path = (self.checkpoint_path / f"{self.load}").resolve().absolute().__str__()
+        load_path = (self.checkpoint_path / self.task / f"{self.load}").resolve().absolute().__str__()
         to_load = jt.load(load_path)
 
         self.generator.load_state_dict(to_load['generator'])
@@ -138,14 +149,15 @@ class GANExperiment:
         self.epoch = to_load['epoch'] + 1
         self.iteration = to_load['iteration'] + 1
 
-
-
     def _save_model(self, epochs, iterations):
-        # Check if self.checkpoint_path exists
-        if not self.checkpoint_path.exists():
-            self.checkpoint_path.mkdir()
 
-        save_path = (self.checkpoint_path / f"{self.task}-e{epochs}-i{iterations}.pkl").resolve().absolute().__str__()
+        path = self.checkpoint_path / self.task
+
+        # Check if self.checkpoint_path exists
+        if not path.exists():
+            path.mkdir()
+
+        save_path = (path / f"{self.task}-e{epochs}-i{iterations}.pkl").resolve().absolute().__str__()
         to_save = {
             "generator": self.generator.state_dict(),
             "discriminator": self.discriminator.state_dict(),
@@ -170,12 +182,14 @@ class GANExperiment:
         self.checkpoint_path = Path(config['meta']['checkpoint_path'])
         self.test_save_path = Path(config['meta']['test_save_path'])
         self.load = config['meta']['load']
+        self.log_interval = config['meta']['log_interval']
+
         # Reset random number generator
-        seed = config['meta']['seed']
-        if seed is not None:
+        self.seed = config['meta']['seed']
+        if self.seed is not None:
             jt.misc.set_global_seed(self.seed, different_seed_for_mpi=True)  # Set seed
-            np.random.seed(seed)
-            random.seed(seed)
+            np.random.seed(self.seed)
+            random.seed(self.seed)
 
         # Training
         self.max_epochs = config['training']['max_epochs']
