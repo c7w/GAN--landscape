@@ -57,14 +57,19 @@ class GANExperiment:
             num_workers=12,
         )
 
+    def _should_step(self):
+        if self.iteration % 16 == 0:
+            return True
+
     def train(self):
 
         # TODO: Add more losses...??
         criterion = nn.MSELoss()
+        criterion_L1 = nn.L1Loss()
         # Originally a L1 Loss exists here...
 
-        loss_D = jt.array(99)
-        loss_G = jt.array(99)
+        cumulate_loss_D = jt.array(0)
+        cumulate_loss_G = jt.array(0)
 
         for self.epoch in range(self.epoch, self.max_epochs):
 
@@ -84,7 +89,8 @@ class GANExperiment:
                     loss_real = criterion(self.discriminator(img, label), 1.0)
 
                     loss_D = (loss_fake + loss_real) / 2
-                    self.optimizer_D.step(loss_D)
+                    cumulate_loss_D += loss_D
+                    # self.optimizer_D.step(loss_D)
 
                 else:
                     # Train Generator
@@ -94,7 +100,16 @@ class GANExperiment:
                     fake_img = self.generator(label)
 
                     loss_G = criterion(self.discriminator(fake_img, label), 1.0)
-                    self.optimizer_G.step(loss_G)
+                    loss_G += 200 * criterion_L1(fake_img, img)  # TODO: Change this 200?
+                    cumulate_loss_G += loss_G
+
+                    # self.optimizer_G.step(loss_G)
+
+                if self._should_step():
+                    self.optimizer_D.step(cumulate_loss_D)
+                    self.optimizer_G.step(cumulate_loss_G)
+                    cumulate_loss_D = jt.array(0)
+                    cumulate_loss_G = jt.array(0)
 
                 # Logging
                 if self.log_interval > 0 and self.iteration % self.log_interval == 1:

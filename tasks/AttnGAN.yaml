@@ -1,9 +1,9 @@
 meta:
-  task: AttnGAN-3
+  task: AttnGAN-4
   checkpoint_path: "/home/c7w/landscape/checkpoints/" # Would save checkpoints to `<checkpoint_path>/<task>/`
   test_save_path: "/home/c7w/landscape/test_save/" # Would save test images to `<test_save_path>/<task>/`
   log_path: "/home/c7w/landscape/logs/" # Would save logs to `<log_path>/<task>/`
-  log_interval: 10
+  log_interval: 20
   load: # Checkpoint ID to be loaded, if None not load
   seed: 123123 # Seed
 
