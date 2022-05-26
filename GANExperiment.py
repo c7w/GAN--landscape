@@ -68,6 +68,7 @@ class GANExperiment:
         criterion_L1 = nn.L1Loss()
         # Originally a L1 Loss exists here...
 
+        loss_D, loss_G = jt.array(99.0), jt.array(99.0)
         cumulate_loss_D = jt.array(0)
         cumulate_loss_G = jt.array(0)
 
@@ -78,7 +79,8 @@ class GANExperiment:
                 img, label, photo_id = batch
 
                 # If loss_G is way too high, we should train generator more
-                if self.iteration % 2 == 0 and loss_G / loss_D <= 2.0:
+                # if self.iteration % 2 == 0 and loss_G / loss_D <= 2.0: # TODO: This control method would cause loss to be nan..
+                if self.iteration % 2 == 0:
                     # Train Discriminator
                     stop_grad(self.generator)
                     start_grad(self.discriminator)
