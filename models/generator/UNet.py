@@ -1,3 +1,4 @@
+import IPython
 import jittor as jt
 import jittor.nn as nn
 from models.utils.utils import start_grad, stop_grad, weights_init_normal

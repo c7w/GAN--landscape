@@ -19,23 +19,15 @@ class CNNDiscriminator(nn.Module):
             return layers
 
         self.model = nn.Sequential(
-            discriminator_block(32, 64, normalization=False),
+            discriminator_block(6, 64, normalization=False),  # Input channels in set to 6 = 3 + 3
             *discriminator_block(64, 128),
             *discriminator_block(128, 256),
             *discriminator_block(256, 512, stride=1),
             nn.Conv(512, 1, 4, padding=1, bias=False),
-            nn.Tanh()
         )
 
         for m in self.modules():
             weights_init_normal(m)
 
-    def execute(self, img, label):
-
-        # First, convert label to label map
-        label = label.numpy()
-        label_map = np.concatenate([label == k for k in range(29)], axis=1).astype(np.float32)
-        label_map = jt.array(label_map)
-
-        input = jt.concat((img, label_map), dim=1)
+    def execute(self, input):
         return self.model(input)

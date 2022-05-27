@@ -4,6 +4,7 @@ import zipfile
 import argparse
 from pathlib import Path
 
+import IPython
 import cv2
 import jittor as jt
 import jittor.nn as nn
@@ -16,6 +17,7 @@ from tqdm import tqdm
 
 from datasets.datasets import ImageDataset
 from models import build_generator, build_discriminator
+from models.loss import calc_loss, build_loss
 from models.utils.utils import stop_grad, start_grad
 
 
@@ -47,7 +49,7 @@ class GANExperiment:
         self.dataloader = ImageDataset("/home/c7w/landscape/data/", mode="train").set_attrs(
             batch_size=self.batch_size,
             shuffle=True,
-            # num_workers=1,
+            num_workers=12,  # If you wanna debug num_workers, comment this line out
         )
 
     def _init_dataset_valid(self):
@@ -58,14 +60,14 @@ class GANExperiment:
         )
 
     def _should_step(self):
-        if self.iteration % 16 == 0:
+        if self.iteration % self.step_every_iteration == 0:
             return True
 
     def train(self):
 
         # TODO: Add more losses...??
-        criterion = nn.MSELoss()
-        criterion_L1 = nn.L1Loss()
+
+        loss_fn = build_loss(config=self.config['loss'])
         # Originally a L1 Loss exists here...
 
         loss_D, loss_G = jt.array(99.0), jt.array(99.0)
@@ -79,20 +81,26 @@ class GANExperiment:
                 img, label, photo_id = batch
 
                 # If loss_G is way too high, we should train generator more
-                # if self.iteration % 2 == 0 and loss_G / loss_D <= 2.0: # TODO: This control method would cause loss to be nan..
+                # TODO: This control method would cause loss to be nan..
+                # if self.iteration % 2 == 0 and loss_G / loss_D <= 2.0:
+
                 if self.iteration % 2 == 0:
                     # Train Discriminator
                     stop_grad(self.generator)
                     start_grad(self.discriminator)
 
                     fake_img = self.generator(label)
+                    label_fake_img = jt.contrib.concat((label, fake_img), dim=1)
+                    # Here detach() means ending gradient back-tracing
+                    pred_fake = self.discriminator(label_fake_img.detach())
 
-                    loss_fake = criterion(self.discriminator(fake_img, label), -1.0)
-                    loss_real = criterion(self.discriminator(img, label), 1.0)
+                    label_real_img = jt.contrib.concat((label, img), dim=1)
+                    pred_real = self.discriminator(label_real_img)
 
-                    loss_D = (loss_fake + loss_real) / 2
+                    loss_D = calc_loss(loss_fn, type='D', discriminator_result_fake=pred_fake,
+                                       discriminator_result_real=pred_real)
+
                     cumulate_loss_D += loss_D
-                    # self.optimizer_D.step(loss_D)
 
                 else:
                     # Train Generator
@@ -101,17 +109,21 @@ class GANExperiment:
 
                     fake_img = self.generator(label)
 
-                    loss_G = criterion(self.discriminator(fake_img, label), 1.0)
-                    loss_G += 200 * criterion_L1(fake_img, img)  # TODO: Change this 200?
+                    label_fake_img = jt.contrib.concat((label, fake_img), dim=1)
+                    pred_fake = self.discriminator(label_fake_img)
+
+                    loss_G = calc_loss(loss_fn, type='G', fake_img=fake_img, real_img=img,
+                                       discriminator_result_fake=pred_fake)
                     cumulate_loss_G += loss_G
 
-                    # self.optimizer_G.step(loss_G)
-
+                # optimizer.step()
                 if self._should_step():
-                    self.optimizer_D.step(cumulate_loss_D)
-                    self.optimizer_G.step(cumulate_loss_G)
-                    cumulate_loss_D = jt.array(0)
-                    cumulate_loss_G = jt.array(0)
+                    if cumulate_loss_D.item() > 0:
+                        self.optimizer_D.step(cumulate_loss_D)
+                        cumulate_loss_D = jt.array(0.0)
+                    if cumulate_loss_G.item() > 0:
+                        self.optimizer_G.step(cumulate_loss_G)
+                        cumulate_loss_G = jt.array(0.0)
 
                 # Logging
                 if self.log_interval > 0 and self.iteration % self.log_interval == 1:
@@ -231,6 +243,7 @@ class GANExperiment:
         self.batch_size = config['training']['batch_size']
         self.save_every_iteration = config['training']['save_every_iteration']
         self.save_every_epoch = config['training']['save_every_epoch']
+        self.step_every_iteration = config['training']['step_every_iteration']
 
 
 if __name__ == "__main__":
