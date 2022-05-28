@@ -155,6 +155,9 @@ class GANExperiment:
         os.makedirs(output_dir, exist_ok=True)
 
         if sample:
+
+            cnt = 0
+
             for i, (_, real_A, photo_id) in enumerate(self.dataloader):
                 fake_B = self.generator(real_A)
                 fake_B = ((fake_B + 1) / 2 * 255).numpy().astype('uint8')
@@ -164,7 +167,8 @@ class GANExperiment:
                     cv2.imwrite(filename,
                                 fake_B[idx].transpose(1, 2, 0)[:, :, ::-1])  # BGR to RGB
 
-                if i == 10:
+                cnt += fake_B.shape[0]
+                if cnt >= 10:
                     break
 
         else:
