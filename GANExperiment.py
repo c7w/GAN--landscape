@@ -84,7 +84,16 @@ class GANExperiment:
                 # TODO: This control method would cause loss to be nan..
                 # if self.iteration % 2 == 0 and loss_G / loss_D <= 2.0:
 
-                if self.iteration % 2 == 0:
+                # Adjust ls weight of generator according to loss_D
+                if loss_D > 0.8:
+                    loss_fn['generator'][1][0] = 0.0
+                elif loss_D < 0.02:
+                    loss_fn['generator'][1][0] = 3.0
+                else:
+                    loss_fn['generator'][1][0] = 1.0
+
+
+                if (self.iteration % 2 == 0 and loss_D >= 0.02) or self.iteration % 20 == 0:
                     # Train Discriminator
                     stop_grad(self.generator)
                     start_grad(self.discriminator)
@@ -93,9 +102,11 @@ class GANExperiment:
                     label_fake_img = jt.contrib.concat((label, fake_img), dim=1)
                     # Here detach() means ending gradient back-tracing
                     pred_fake = self.discriminator(label_fake_img.detach())
+                    # print("pred_fake: ", pred_fake)
 
                     label_real_img = jt.contrib.concat((label, img), dim=1)
                     pred_real = self.discriminator(label_real_img)
+                    # print("pred_real: ", pred_real)
 
                     loss_D = calc_loss(loss_fn, type='D', discriminator_result_fake=pred_fake,
                                        discriminator_result_real=pred_real)
@@ -111,6 +122,7 @@ class GANExperiment:
 
                     label_fake_img = jt.contrib.concat((label, fake_img), dim=1)
                     pred_fake = self.discriminator(label_fake_img)
+                    # print("[G] pred_fake: ", pred_fake)
 
                     loss_G = calc_loss(loss_fn, type='G', fake_img=fake_img, real_img=img,
                                        discriminator_result_fake=pred_fake)

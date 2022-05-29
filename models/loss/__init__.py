@@ -7,7 +7,7 @@ from jittor import nn
 
 def GeneratorLossLS(**kwargs):
     discriminator_result_fake = kwargs['discriminator_result_fake']
-    return (discriminator_result_fake - 1.0) ** 2
+    return ((discriminator_result_fake - 1.0) ** 2).mean()
 
 
 def GeneratorLossL1(**kwargs):
@@ -24,7 +24,7 @@ def GeneratorLossBCE(**kwargs):
 def DiscriminatorLossLS(**kwargs):
     discriminator_result_fake = kwargs['discriminator_result_fake']
     discriminator_result_real = kwargs['discriminator_result_real']
-    return (discriminator_result_fake - (-1.0)) ** 2 + (discriminator_result_real - 1.0) ** 2
+    return ((discriminator_result_fake - (-1.0)) ** 2).mean() + ((discriminator_result_real - 1.0) ** 2).mean()
 
 
 def DiscriminatorLossBCE(**kwargs):
@@ -46,7 +46,7 @@ def build_loss(config):
     # Build loss for Generator
     for entry in config['generator']:
         if entry['type'] == 'ls':
-            losses['generator'].append((entry['weight'], GeneratorLossLS))
+            losses['generator'].append([entry['weight'], GeneratorLossLS])
         elif entry['type'] == 'l1':
             losses['generator'].append((entry['weight'], GeneratorLossL1))
         elif entry['type'] == 'bce':

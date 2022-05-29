@@ -4,6 +4,7 @@ import jittor as jt
 import jittor.nn as nn
 
 from models.discriminator.CNN import CNNDiscriminator
+from models.discriminator.CNN_LS import CNNLSDiscriminator
 from models.discriminator.ConvGlob import ConvGlobDiscriminator
 from models.generator.AttnGen import AttnGen
 from models.generator.UNet import UnetGenerator
@@ -39,6 +40,9 @@ def build_generator(config):
 def build_discriminator(config):
     if config['type'] == 'CNN':
         network = CNNDiscriminator()
+
+    elif config['type'] == 'CNN-LS':
+        network = CNNLSDiscriminator()
 
     elif config['type'] == 'ConvGlob':
         network = ConvGlobDiscriminator()
