@@ -7,6 +7,7 @@ from models.discriminator.CNN import CNNDiscriminator
 from models.discriminator.ConvGlob import ConvGlobDiscriminator
 from models.generator.AttnGen import AttnGen
 from models.generator.UNet import UnetGenerator
+from models.generator.UNetNoise import UNetGeneratorNoise
 
 
 def build_optimizer(params, config):
@@ -29,6 +30,9 @@ def build_generator(config):
     elif config['type'] == 'AttnGen':
         network = AttnGen()
 
+    elif config['type'] == 'UNNoise':
+        network = UNetGeneratorNoise(3, 3, 7, 64, norm_layer=nn.BatchNorm2d, use_dropout=True)
+
     else:
         raise NotImplementedError(f"Unknown generator type: {config['type']}")
 
@@ -49,4 +53,3 @@ def build_discriminator(config):
 
     optimizer = build_optimizer(network.parameters(), config['optimizer'])
     return network, optimizer
-
