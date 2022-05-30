@@ -4,7 +4,7 @@ import zipfile
 import argparse
 from pathlib import Path
 
-import IPython
+from IPython import embed
 import cv2
 import jittor as jt
 import jittor.nn as nn
@@ -18,8 +18,9 @@ from tqdm import tqdm
 from datasets.datasets import ImageDataset
 from models import build_generator, build_discriminator
 from models.loss import calc_loss, build_loss
-from models.utils.utils import stop_grad, start_grad
+from models.utils.utils import stop_grad, start_grad, forgiving_state_restore
 
+import wandb
 
 class GANExperiment:
     def __init__(self, args: Namespace):
@@ -46,14 +47,14 @@ class GANExperiment:
             self._load_model()
 
     def _init_dataset_train(self):
-        self.dataloader = ImageDataset("/home/c7w/landscape/data/", mode="train").set_attrs(
+        self.dataloader = ImageDataset("data/", mode="train").set_attrs(
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=12,  # If you wanna debug num_workers, comment this line out
         )
 
     def _init_dataset_valid(self):
-        self.dataloader = ImageDataset("/home/c7w/landscape/data/", mode="test").set_attrs(
+        self.dataloader = ImageDataset("data/", mode="test").set_attrs(
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=12,
@@ -67,6 +68,9 @@ class GANExperiment:
 
         # TODO: Add more losses...??
 
+        wandb.init(project=self.config["meta"]["task"], entity="jittor-landscape")
+
+        wandb.config = self.config
         loss_fn = build_loss(config=self.config['loss'])
         # Originally a L1 Loss exists here...
 
@@ -117,6 +121,11 @@ class GANExperiment:
                     # Train Generator
                     stop_grad(self.discriminator)
                     start_grad(self.generator)
+                    # stop_grad(self.generator)
+                    #
+                    # for p in self.generator.parameters():
+                    #     if 'noise_weight' in p.name():
+                    #         p.start_grad()
 
                     fake_img = self.generator(label)
 
@@ -131,11 +140,14 @@ class GANExperiment:
                 # optimizer.step()
                 if self._should_step():
                     if cumulate_loss_D.item() > 0:
+                        wandb.log({"loss_D": cumulate_loss_D.item()})
                         self.optimizer_D.step(cumulate_loss_D)
                         cumulate_loss_D = jt.array(0.0)
                     if cumulate_loss_G.item() > 0:
+                        wandb.log({"loss_G": cumulate_loss_G.item()})
                         self.optimizer_G.step(cumulate_loss_G)
                         cumulate_loss_G = jt.array(0.0)
+
 
                 # Logging
                 if self.log_interval > 0 and self.iteration % self.log_interval == 1:
@@ -154,6 +166,10 @@ class GANExperiment:
 
             # Save for epoch
             if self.save_every_epoch > 0 and self.epoch % self.save_every_epoch == 1:
+                # for p in self.generator.parameters():
+                #     if 'noise_weight' in p.name():
+                #         print(p.name())
+                #         print(p)
                 self._save_model(self.epoch, self.iteration)
                 self.test(save_name=f"test-{self.epoch}-{self.iteration}", sample=True)
 
@@ -204,7 +220,8 @@ class GANExperiment:
         load_path = (self.checkpoint_path / self.task / f"{self.load}").resolve().absolute().__str__()
         to_load = jt.load(load_path)
 
-        self.generator.load_state_dict(to_load['generator'])
+        # self.generator.load_state_dict(to_load['generator'])
+        self.generator = forgiving_state_restore(self.generator, to_load['generator'])
         self.discriminator.load_state_dict(to_load['discriminator'])
         self.optimizer_G.load_state_dict(to_load['optimizer_G'])
         self.optimizer_D.load_state_dict(to_load['optimizer_D'])
