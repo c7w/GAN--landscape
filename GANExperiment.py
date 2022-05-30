@@ -32,7 +32,7 @@ class GANExperiment:
             self.train()
         elif args.mode == 'test':
             self._init_dataset_valid()
-            self.test(sample=True)
+            self.test()
 
     def _init_network(self):
         # Network
@@ -71,7 +71,6 @@ class GANExperiment:
         wandb.init(project=self.config["meta"]["task"], entity="jittor-landscape")
 
         wandb.config = self.config
-
         loss_fn = build_loss(config=self.config['loss'])
         # Originally a L1 Loss exists here...
 
@@ -110,11 +109,12 @@ class GANExperiment:
                 else:
                     # Train Generator
                     stop_grad(self.discriminator)
-                    stop_grad(self.generator)
-
-                    for p in self.generator.parameters():
-                        if 'noise_weight' in p.name():
-                            p.start_grad()
+                    start_grad(self.generator)
+                    # stop_grad(self.generator)
+                    #
+                    # for p in self.generator.parameters():
+                    #     if 'noise_weight' in p.name():
+                    #         p.start_grad()
 
                     fake_img = self.generator(label)
 
@@ -146,18 +146,18 @@ class GANExperiment:
                     )
 
                 # Save for iteration
-                if self.save_every_iteration > 0 and self.iteration % self.save_every_iteration == 0:
+                if self.save_every_iteration > 0 and self.iteration % self.save_every_iteration == 1:
                     self._save_model(self.epoch, self.iteration)
                     self.test(save_name=f"test-{self.epoch}-{self.iteration}", sample=True)
 
                 self.iteration += 1
 
             # Save for epoch
-            if self.save_every_epoch > 0 and self.epoch % self.save_every_epoch == 0:
-                for p in self.generator.parameters():
-                    if 'noise_weight' in p.name():
-                        print(p.name())
-                        print(p)
+            if self.save_every_epoch > 0 and self.epoch % self.save_every_epoch == 1:
+                # for p in self.generator.parameters():
+                #     if 'noise_weight' in p.name():
+                #         print(p.name())
+                #         print(p)
                 self._save_model(self.epoch, self.iteration)
                 self.test(save_name=f"test-{self.epoch}-{self.iteration}", sample=True)
 
