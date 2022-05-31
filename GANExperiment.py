@@ -47,14 +47,14 @@ class GANExperiment:
             self._load_model()
 
     def _init_dataset_train(self):
-        self.dataloader = ImageDataset("data/", mode="train").set_attrs(
+        self.train_dataloader = ImageDataset("data/", mode="train").set_attrs(
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=12,  # If you wanna debug num_workers, comment this line out
         )
 
     def _init_dataset_valid(self):
-        self.dataloader = ImageDataset("data/", mode="test").set_attrs(
+        self.test_dataloader = ImageDataset("data/", mode="test").set_attrs(
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=12,
@@ -80,7 +80,7 @@ class GANExperiment:
 
         for self.epoch in range(self.epoch, self.max_epochs):
 
-            loop = tqdm(enumerate(self.dataloader), total=len(self.dataloader))
+            loop = tqdm(enumerate(self.train_dataloader), total=len(self.train_dataloader))
             for batch_idx, batch in loop:
                 img, label, photo_id = batch
 
@@ -88,7 +88,7 @@ class GANExperiment:
                 # TODO: This control method would cause loss to be nan..
                 # if self.iteration % 2 == 0 and loss_G / loss_D <= 2.0:
 
-                if self.iteration % 2 == 0:
+                if self.iteration % 10 == 0:
                     # Train Discriminator
                     stop_grad(self.generator)
                     start_grad(self.discriminator)
@@ -174,7 +174,7 @@ class GANExperiment:
 
             cnt = 0
 
-            for i, (_, real_A, photo_id) in enumerate(self.dataloader):
+            for i, (_, real_A, photo_id) in enumerate(self.test_dataloader):
                 fake_B = self.generator(real_A)
                 fake_B = ((fake_B + 1) / 2 * 255).numpy().astype('uint8')
 
@@ -193,7 +193,7 @@ class GANExperiment:
                                 zipfile.ZIP_DEFLATED)
 
             # Iterate through val_dataloader
-            for i, (_, real_A, photo_id) in enumerate(self.dataloader):
+            for i, (_, real_A, photo_id) in enumerate(self.test_dataloader):
                 fake_B = self.generator(real_A)
                 fake_B = ((fake_B + 1) / 2 * 255).numpy().astype('uint8')
 
