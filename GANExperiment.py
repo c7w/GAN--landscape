@@ -29,6 +29,7 @@ class GANExperiment:
 
         if args.mode == 'train':
             self._init_dataset_train()
+            self._init_dataset_valid()
             self.train()
         elif args.mode == 'test':
             self._init_dataset_valid()
@@ -44,6 +45,7 @@ class GANExperiment:
 
         # Load model
         if self.load is not None:
+            print("Try to load", self.load)
             self._load_model()
 
     def _init_dataset_train(self):
@@ -89,15 +91,16 @@ class GANExperiment:
                 # if self.iteration % 2 == 0 and loss_G / loss_D <= 2.0:
 
                 # Adjust ls weight of generator according to loss_D
-                if loss_D > 0.8:
-                    loss_fn['generator'][1][0] = 0.0
-                elif loss_D < 0.02:
-                    loss_fn['generator'][1][0] = 3.0
-                else:
-                    loss_fn['generator'][1][0] = 1.0
+                # if loss_D > 0.8:
+                #     loss_fn['generator'][1][0] = 0.0
+                # elif loss_D < 0.02:
+                #     loss_fn['generator'][1][0] = 3.0
+                # else:
+                #     loss_fn['generator'][1][0] = 1.0
 
 
                 if (self.iteration % 2 == 0 and loss_D >= 0.02) or self.iteration % 20 == 0:
+                # if self.iteration % 10 == 0:
                     # Train Discriminator
                     stop_grad(self.generator)
                     start_grad(self.discriminator)
@@ -173,7 +176,7 @@ class GANExperiment:
                 self._save_model(self.epoch, self.iteration)
                 self.test(save_name=f"test-{self.epoch}-{self.iteration}", sample=True)
 
-    def test(self, save_name=None, sample=False):
+    def test(self, save_name=None, sample=False, epoch=None, iteration=None):
         stop_grad(self.generator)
 
         save_name = datetime.datetime.now().strftime('%Y%m%d-%H%M%S') + ("" if save_name is None else ("-" + save_name))
@@ -182,22 +185,45 @@ class GANExperiment:
 
         os.makedirs(output_dir, exist_ok=True)
 
+        # classes = ["mountain", "sky", "water", "sea", "rock", "tree", "earth", "hill", "river", "sand", "land", "building", "grass", "plant", "person", "boat", "waterfall", "wall", "pier", "path", "lake", "bridge", "field", "road", "railing", "fence", "ship", "house", "other"]
+        # classes = {i: j for i, j in enumerate(classes)}
+
         if sample:
 
             cnt = 0
 
-            for i, (_, real_A, photo_id) in enumerate(self.test_dataloader):
-                fake_B = self.generator(real_A)
-                fake_B = ((fake_B + 1) / 2 * 255).numpy().astype('uint8')
+            imgs = []
 
+            for i, (_, real_A, photo_id) in enumerate(self.test_dataloader):
+                self.generator.eval()
+                fake_B = self.generator(real_A)
+                self.generator.train()
+                fake_B = ((fake_B + 1) / 2 * 255).numpy().astype('uint8')
                 for idx in range(fake_B.shape[0]):
                     filename = str(output_dir / f"{photo_id[idx]}.jpg")
-                    cv2.imwrite(filename,
-                                fake_B[idx].transpose(1, 2, 0)[:, :, ::-1])  # BGR to RGB
-
-                cnt += fake_B.shape[0]
+                    img = fake_B[idx].transpose(1, 2, 0)[:, :, ::-1]
+                    # cv2.imwrite(filename, img)  # BGR to RGB
+                    # print(real_A.shape)
+                    imgs += [img]
+                    cnt += 1
+                    if cnt >= 10:
+                        break
                 if cnt >= 10:
                     break
+
+            if self.mode == 'train':
+                print(f"logging {len(imgs)} images")
+                wandb.log({
+                    "test_sample": [wandb.Image(img, caption=f"{self.epoch}_{img_idx}") for img_idx, img in enumerate(imgs)]
+                    #     masks={
+                    #     "ground_truth": {
+                    #         "mask_data": real_A[idx],
+                    #         "class_labels": classes
+                    #     }
+                    # },
+                })
+
+            del imgs
 
         else:
 
@@ -255,6 +281,8 @@ class GANExperiment:
         with open(config_path) as f:
             config = yaml.safe_load(f)
             self.config = config
+
+        self.mode = args.mode
 
         # Meta Data
         self.task = config['meta']['task']
