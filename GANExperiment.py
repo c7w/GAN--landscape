@@ -85,15 +85,16 @@ class GANExperiment:
                 # if self.iteration % 2 == 0 and loss_G / loss_D <= 2.0:
 
                 # Adjust ls weight of generator according to loss_D
-                if loss_D > 0.8:
-                    loss_fn['generator'][1][0] = 0.0
-                elif loss_D < 0.02:
-                    loss_fn['generator'][1][0] = 3.0
-                else:
-                    loss_fn['generator'][1][0] = 1.0
+                # if loss_D > 0.8:
+                #     loss_fn['generator'][1][0] = 0.0
+                # elif loss_D < 0.02:
+                #     loss_fn['generator'][1][0] = 3.0
+                # else:
+                #     loss_fn['generator'][1][0] = 1.0
 
 
-                if (self.iteration % 2 == 0 and loss_D >= 0.02) or self.iteration % 20 == 0:
+                # if (self.iteration % 2 == 0 and loss_D >= 0.02) or self.iteration % 20 == 0:
+                if self.iteration % 2 == 0:
                     # Train Discriminator
                     stop_grad(self.generator)
                     start_grad(self.discriminator)
