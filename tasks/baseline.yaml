@@ -4,14 +4,14 @@ meta:
   test_save_path: "test_save/" # Would save test images to `<test_save_path>/<task>/`
   log_path: "logs/" # Would save logs to `<log_path>/<task>/`
   log_interval: 2
-  load: baseline-e901-i282014.pkl # Checkpoint ID to be loaded, if None not load
+  load: baseline-e901-i282014.pkl
   seed: 123123 # Seed
 
 
 training:
-  max_epochs: 1000
-  max_iterations: 1000000
-  batch_size: 16
+  max_epochs: 3000
+  max_iterations: 2000000
+  batch_size: 32
   save_every_iteration: -1 # Save every n iterations, -1 for disabled
   save_every_epoch: 10  # Save every n epochs, -1 for disabled
   step_every_iteration: 1 # step every n iterations
@@ -21,7 +21,7 @@ network:
     type: UNet
     optimizer:
       type: Adam
-      lr: 0.0002
+      lr: 0.0001
       beta1: 0.9
       beta2: 0.999
       weight_decay: 0.0
@@ -30,7 +30,7 @@ network:
     type: CNN
     optimizer:
         type: Adam
-        lr: 0.0002
+        lr: 0.0001
         beta1: 0.9
         beta2: 0.99
         weight_decay: 0.0

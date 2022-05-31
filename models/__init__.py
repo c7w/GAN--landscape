@@ -8,6 +8,7 @@ from models.discriminator.CNN_LS import CNNLSDiscriminator
 from models.discriminator.ConvGlob import ConvGlobDiscriminator
 from models.generator.AttnGen import AttnGen
 from models.generator.UNet import UnetGenerator
+from models.generator.UNetEmbedded import UnetGeneratorEmbedded
 from models.generator.UNetNoise import UNetGeneratorNoise
 
 
@@ -27,6 +28,9 @@ def build_optimizer(params, config):
 def build_generator(config):
     if config['type'] == 'UNet':
         network = UnetGenerator(3, 3, 7, 64, norm_layer=nn.BatchNorm2d, use_dropout=True)
+
+    elif config['type'] == 'UNetEmbedded':
+        network = UnetGeneratorEmbedded(64, 3, 7, 64, norm_layer=nn.BatchNorm2d, use_dropout=True)
 
     elif config['type'] == 'AttnGen':
         network = AttnGen()
