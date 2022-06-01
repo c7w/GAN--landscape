@@ -1,0 +1,27 @@
+{
+    "os": "Linux-5.4.0-109-generic-x86_64-with-glibc2.17",
+    "python": "3.8.10",
+    "heartbeatAt": "2022-06-01T07:08:48.571979",
+    "startedAt": "2022-06-01T07:08:47.085680",
+    "docker": null,
+    "gpu": "NVIDIA GeForce RTX 3090",
+    "gpu_count": 1,
+    "cpu_count": 64,
+    "cuda": null,
+    "args": [
+        "--config",
+        "tasks/WGAN.yaml"
+    ],
+    "state": "running",
+    "program": "GANExperiment.py",
+    "codePath": "GANExperiment.py",
+    "git": {
+        "remote": "git@github.com:c7w/GAN--landscape.git",
+        "commit": "ee118c0b234e368ffda965235ae440de4821b933"
+    },
+    "email": "admin@cc7w.cf",
+    "root": "/home/eren/GAN--landscape",
+    "host": "ai0110",
+    "username": "root",
+    "executable": "/root/miniconda3/envs/torch/bin/python3"
+}
