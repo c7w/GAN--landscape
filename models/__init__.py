@@ -6,10 +6,12 @@ import jittor.nn as nn
 from models.discriminator.CNN import CNNDiscriminator
 from models.discriminator.CNN_LS import CNNLSDiscriminator
 from models.discriminator.ConvGlob import ConvGlobDiscriminator
+from models.discriminator.WGANDis import WGANDis
 from models.generator.AttnGen import AttnGen
 from models.generator.UNet import UnetGenerator
 from models.generator.UNetEmbedded import UnetGeneratorEmbedded
 from models.generator.UNetNoise import UNetGeneratorNoise
+from models.generator.WGAN import W_GAN_GP_Generator
 
 
 def build_optimizer(params, config):
@@ -38,6 +40,9 @@ def build_generator(config):
     elif config['type'] == 'UNNoise':
         network = UNetGeneratorNoise(3, 3, 7, 64, norm_layer=nn.BatchNorm2d, use_dropout=True)
 
+    elif config['type'] == 'W_GAN_GP_Generator':
+        network = W_GAN_GP_Generator()
+
     else:
         raise NotImplementedError(f"Unknown generator type: {config['type']}")
 
@@ -54,6 +59,9 @@ def build_discriminator(config):
 
     elif config['type'] == 'ConvGlob':
         network = ConvGlobDiscriminator()
+
+    elif config['type'] == 'WGANDis':
+        network = WGANDis()
 
     else:
         raise NotImplementedError(f"Unknown discriminator type: {config['type']}")

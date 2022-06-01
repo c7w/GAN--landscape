@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "GANExperiment.py", line 293, in <module>
+    experiment = GANExperiment(opts)
+  File "GANExperiment.py", line 32, in __init__
+    self.train()
+  File "GANExperiment.py", line 74, in train
+    loss_fn = build_loss(config=self.config['loss'])
+KeyError: 'loss'
+Traceback (most recent call last):
+  File "GANExperiment.py", line 293, in <module>
+    experiment = GANExperiment(opts)
+  File "GANExperiment.py", line 32, in __init__
+    self.train()
+  File "GANExperiment.py", line 74, in train
+    loss_fn = build_loss(config=self.config['loss'])
+KeyError: 'loss'

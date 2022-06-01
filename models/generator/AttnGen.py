@@ -44,8 +44,6 @@ class AttnGenHeader(nn.Module):
             nn.Conv2d(in_channels=hidden_dim, out_channels=3, kernel_size=1, stride=1, padding=0, bias=True),
         )
 
-
-
     def execute(self, features):
         # x = self._transform_inputs(inputs)  # len=4, 1/4, 1/8, 1/16, 1/32
         c1, c2, c3, c4 = features
