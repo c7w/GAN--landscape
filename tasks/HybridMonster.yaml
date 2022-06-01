@@ -1,0 +1,48 @@
+meta:
+  task: HybridMonster-1
+  checkpoint_path: "/home/gaoha/GAN--landscape/checkpoints/" # Would save checkpoints to `<checkpoint_path>/<task>/`
+  test_save_path: "/home/gaoha/landscape/test_save/" # Would save test images to `<test_save_path>/<task>/`
+  log_path: "/home/gaoha/landscape/logs/" # Would save logs to `<log_path>/<task>/`
+  log_interval: 2
+  load: # Checkpoint ID to be loaded, if None not load
+  seed: 123123 # Seed
+
+training:
+  train_discriminator_every: 2
+  max_epochs: 1000
+  max_iterations: 1000000
+  batch_size: 16  # TODO: maybe try to change this to 2 or 4?
+  save_every_iteration: 1000 # Save every n iterations, -1 for disabled
+  save_every_epoch: -1 # Save every n epochs, -1 for disabled
+  step_every_iteration: 1 # Step every n iterations
+
+network:
+  generator:
+    type: UNNoise
+    optimizer:
+      type: RMSprop
+      lr: 0.0002
+      alpha: 0.99
+    clip_grad_norm: 1000.0
+    clip_weights: 2.0
+
+  discriminator:
+    type: WGAN_Discriminator
+    optimizer:
+      type: RMSprop
+      lr: 0.0002
+      alpha: 0.05
+    clip_grad_norm: 1000.0
+    clip_weights: 2.0
+
+loss:
+  generator:
+    - type: 'l1'
+      weight: 100.0
+    - type: "ls"
+      weight: 1.0
+  discriminator:
+    - type: "ls"
+      weight: 1.0
+    - type: "gp"
+      weight: 10.0

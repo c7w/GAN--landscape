@@ -3,6 +3,7 @@ import jittor.nn
 
 # Least Squares Loss
 from jittor import nn
+from GradientPenalty import DiscriminatorLossGradientPenalty
 
 
 def GeneratorLossLS(**kwargs):
@@ -60,6 +61,8 @@ def build_loss(config):
             losses['discriminator'].append((entry['weight'], DiscriminatorLossLS))
         elif entry['type'] == 'bce':
             losses['discriminator'].append((entry['weight'], DiscriminatorLossBCE))
+        elif entry['type'] == 'gp':
+            losses['discriminator'].append((entry['weight'], DiscriminatorLossGradientPenalty))
         else:
             raise NotImplementedError(f"Unknown loss type: {entry['type']}")
 

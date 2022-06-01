@@ -6,7 +6,7 @@ import jittor.nn as nn
 from models.discriminator.CNN import CNNDiscriminator
 from models.discriminator.CNN_LS import CNNLSDiscriminator
 from models.discriminator.ConvGlob import ConvGlobDiscriminator
-from models.discriminator.WGANDis import WGANDis
+from models.discriminator.WGAN_Discriminator import WGAN_Discriminator
 from models.generator.AttnGen import AttnGen
 from models.generator.UNet import UnetGenerator
 from models.generator.UNetEmbedded import UnetGeneratorEmbedded
@@ -47,7 +47,7 @@ def build_generator(config):
         raise NotImplementedError(f"Unknown generator type: {config['type']}")
 
     optimizer = build_optimizer(network.parameters(), config['optimizer'])
-    return network, optimizer
+    return network, optimizer, config
 
 
 def build_discriminator(config):
@@ -60,12 +60,12 @@ def build_discriminator(config):
     elif config['type'] == 'ConvGlob':
         network = ConvGlobDiscriminator()
 
-    elif config['type'] == 'WGANDis':
-        network = WGANDis()
+    elif config['type'] == 'WGAN_Discriminator':
+        network = WGAN_Discriminator()
 
     else:
         raise NotImplementedError(f"Unknown discriminator type: {config['type']}")
 
 
     optimizer = build_optimizer(network.parameters(), config['optimizer'])
-    return network, optimizer
+    return network, optimizer, config

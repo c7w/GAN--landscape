@@ -37,8 +37,8 @@ class GANExperiment:
 
     def _init_network(self):
         # Network
-        self.generator, self.optimizer_G = build_generator(self.config['network']['generator'])
-        self.discriminator, self.optimizer_D = build_discriminator(self.config['network']['discriminator'])
+        self.generator, self.optimizer_G, self.config_G = build_generator(self.config['network']['generator'])
+        self.discriminator, self.optimizer_D, self.config_D = build_discriminator(self.config['network']['discriminator'])
 
         self.epoch = 1
         self.iteration = 1
@@ -86,22 +86,8 @@ class GANExperiment:
             for batch_idx, batch in loop:
                 img, label, photo_id = batch
 
-                # If loss_G is way too high, we should train generator more
-                # TODO: This control method would cause loss to be nan..
-                # if self.iteration % 2 == 0 and loss_G / loss_D <= 2.0:
+                if self.iteration % self.train_discriminator_every == 0:
 
-                # Adjust ls weight of generator according to loss_D
-                # if loss_D > 0.8:
-                #     loss_fn['generator'][1][0] = 0.0
-                # elif loss_D < 0.02:
-                #     loss_fn['generator'][1][0] = 3.0
-                # else:
-                #     loss_fn['generator'][1][0] = 1.0
-
-
-                if (self.iteration % 2 == 0 and loss_D >= 0.02) or self.iteration % 20 == 0:
-                # if self.iteration % 10 == 0:
-                    # Train Discriminator
                     stop_grad(self.generator)
                     start_grad(self.discriminator)
 
@@ -109,11 +95,9 @@ class GANExperiment:
                     label_fake_img = jt.contrib.concat((label, fake_img), dim=1)
                     # Here detach() means ending gradient back-tracing
                     pred_fake = self.discriminator(label_fake_img.detach())
-                    # print("pred_fake: ", pred_fake)
 
                     label_real_img = jt.contrib.concat((label, img), dim=1)
                     pred_real = self.discriminator(label_real_img)
-                    # print("pred_real: ", pred_real)
 
                     loss_D = calc_loss(loss_fn, type='D', discriminator_result_fake=pred_fake,
                                        discriminator_result_real=pred_real)
@@ -124,31 +108,50 @@ class GANExperiment:
                     # Train Generator
                     stop_grad(self.discriminator)
                     start_grad(self.generator)
-                    # stop_grad(self.generator)
-                    #
-                    # for p in self.generator.parameters():
-                    #     if 'noise_weight' in p.name():
-                    #         p.start_grad()
 
                     fake_img = self.generator(label)
 
                     label_fake_img = jt.contrib.concat((label, fake_img), dim=1)
                     pred_fake = self.discriminator(label_fake_img)
-                    # print("[G] pred_fake: ", pred_fake)
 
                     loss_G = calc_loss(loss_fn, type='G', fake_img=fake_img, real_img=img,
                                        discriminator_result_fake=pred_fake)
                     cumulate_loss_G += loss_G
 
-                # optimizer.step()
+                # step
                 if self._should_step():
                     if cumulate_loss_D.item() > 0:
                         wandb.log({"loss_D": cumulate_loss_D.item()})
+
+                        # Clip grads
+                        if self.config_D.get('clip_grad_norm', 0.0) > 0:
+                            self.optimizer_D.clip_grad_norm(self.config_D.get('clip_grad_norm', 0.0))
+
+                        # Step Optimizer
                         self.optimizer_D.step(cumulate_loss_D)
+
+                        # Clip weights
+                        if self.config_D.get('clip_weights', 0.0) > 0:
+                            clip_weights = self.config_D.get('clip_weights', 0.0)
+                            for p in self.discriminator.parameters():
+                                np.clip(p.data, -clip_weights, clip_weights, out=p.data)
+
                         cumulate_loss_D = jt.array(0.0)
+
                     if cumulate_loss_G.item() > 0:
                         wandb.log({"loss_G": cumulate_loss_G.item()})
+                        # Clip grads
+                        if self.config_G.get('clip_grad_norm', 0.0) > 0:
+                            self.optimizer_G.clip_grad_norm(self.config_G.get('clip_grad_norm', 0.0))
+
+                        # Step Optimizer
                         self.optimizer_G.step(cumulate_loss_G)
+
+                        # Clip weights
+                        if self.config_G.get('clip_weights', 0.0) > 0:
+                            clip_weights = self.config_G.get('clip_weights', 0.0)
+                            for p in self.generator.parameters():
+                                np.clip(p.data, -clip_weights, clip_weights, out=p.data)
                         cumulate_loss_G = jt.array(0.0)
 
 
@@ -176,6 +179,7 @@ class GANExperiment:
                 self._save_model(self.epoch, self.iteration)
                 self.test(save_name=f"test-{self.epoch}-{self.iteration}", sample=True)
 
+
     def test(self, save_name=None, sample=False, epoch=None, iteration=None):
         stop_grad(self.generator)
 
@@ -183,10 +187,6 @@ class GANExperiment:
 
         output_dir = self.test_save_path / self.task / save_name
 
-        os.makedirs(output_dir, exist_ok=True)
-
-        # classes = ["mountain", "sky", "water", "sea", "rock", "tree", "earth", "hill", "river", "sand", "land", "building", "grass", "plant", "person", "boat", "waterfall", "wall", "pier", "path", "lake", "bridge", "field", "road", "railing", "fence", "ship", "house", "other"]
-        # classes = {i: j for i, j in enumerate(classes)}
 
         if sample:
 
@@ -226,6 +226,8 @@ class GANExperiment:
             del imgs
 
         else:
+
+            os.makedirs(output_dir, exist_ok=True)
 
             f = zipfile.ZipFile(str(self.test_save_path / self.task / (save_name + ".zip")), 'w',
                                 zipfile.ZIP_DEFLATED)
@@ -305,6 +307,9 @@ class GANExperiment:
         self.save_every_iteration = config['training']['save_every_iteration']
         self.save_every_epoch = config['training']['save_every_epoch']
         self.step_every_iteration = config['training']['step_every_iteration']
+        self.train_discriminator_every = config['training'].get('train_discriminator_every', 2)
+
+        return config
 
 
 if __name__ == "__main__":
